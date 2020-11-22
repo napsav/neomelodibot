@@ -86,11 +86,11 @@ client.on('message', async message => {
 					dispatcher.destroy()
 					connection.disconnect()
 					playing = false;
-				} else {
-					connection = await message.member.voice.channel.join();
+				} else {					
 					var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*/;
 					var match = args[0].match(regExp);
 					if (match && match[2].length == 11) {
+						connection = await message.member.voice.channel.join();
 						riproduci(connection, "https://youtube.com/watch?v=" + match[2])
 					} else {
 						message.channel.send("Link non valido")
