@@ -22,7 +22,6 @@ const canzoni = [
 	"https://youtu.be/15AIkcufw5s"
 ]
 
-
 var playing = false;
 var dispatcher;
 var connection;
