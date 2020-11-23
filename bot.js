@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const ytdl = require('ytdl-core');
 client.login(process.env.BOT_TOKEN);
-/*
+
 const canzoni = [
 	"https://www.youtube.com/watch?v=pi_DN9Mg4vk",
 	"https://www.youtube.com/watch?v=i-2TEee1OsQ",
@@ -21,12 +21,9 @@ const canzoni = [
 	"https://youtu.be/qesXIWOQAJg",
 	"https://youtu.be/15AIkcufw5s"
 ]
-*/
 
-const canzoni = [
-	"https://www.youtube.com/watch?v=Wjrrgrvq1ew",
-	"https://www.youtube.com/watch?v=9em32dDnTck"
-]
+
+
 var playing = false;
 var dispatcher;
 var connection;
