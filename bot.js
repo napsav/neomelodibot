@@ -45,34 +45,105 @@ const canzoni = [
 var playing = false;
 var dispatcher;
 var connection;
+
+function shuffleArray(array) {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+}
+
+var canzoni_shuffle = canzoni
+const PREFIX = "-"
+var head = 0
+var canzone = null;
+
+client.on('ready', () => {
+	console.log('Connesso');
+});
+
+function riproduci(connection, canzone, neomelodico = false) {
+	dispatcher = connection.play(ytdl(canzone, {
+		quality: 'highestaudio',
+		highWaterMark: 1 << 25
+	}));
+	playing = true;
+	dispatcher.on('debug', info => console.log(info))
+	dispatcher.on('speaking', (x) => {
+		if (!x) {
+			console.log('Riproduzione interrotta');
+			if (neomelodico) {
+				head++
+				canzone = canzoni_shuffle[head%canzoni_shuffle.length]
+				riproduci(connection, canzone, true)
+				playing = false;
+			}
+		}
+	});
+}
+
 client.on('message', async message => {
 
-  if (!message.guild) return;
+	if (!message.guild) return;
+	if (message.author.bot) return;
+	if (message.content.startsWith(PREFIX) && message.content.length > 1) {
+		const args = message.content.slice(PREFIX.length).trim().split(/ +/);
+		const command = args.shift().toLowerCase();
+		console.log(args)
+		console.log(command)
+		if (!args.length && !(command === "play" || command === "p")) {
+			message.channel.send("Devi inserire un link di youtube in questo modo: -p <link> o -play <link>. Per fermare la musica del cuore puoi scrivere 'fo cess'. Non me la prendo.")
+		} else {
+			if (args.length > 2) {
+				message.channel.send("Devi inserire un solo link")
+			} else {
+				if (playing) {
+					dispatcher.destroy()
+					connection.disconnect()
+					playing = false;
+				} else {					
+					var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*/;
+					var match = args[0].match(regExp);
+					if (match && match[2].length == 11) {
+						connection = await message.member.voice.channel.join();
+						riproduci(connection, "https://youtube.com/watch?v=" + match[2])
+					} else {
+						message.channel.send("Link non valido")
+					}
+				}
 
-  if (message.content === 'spazzatura') {
-    if (message.member.voice.channel) {
-      connection = await message.member.voice.channel.join();
-      var canzone = canzoni[Math.floor(Math.random() * canzoni.length)];
-      console.log(canzone);
-      	    dispatcher = connection.play(ytdl(canzone, { filter: 'audioonly' }));
-	    playing = true;
-	    dispatcher.on('finish', () => {
-		      console.log('Riproduzione interrotta');
-		    playing = false;
-	    });
-    } else {
-      message.reply('Devi trovarti in un canale vocale');
-    }
-  }
-    if (message.content === 'fo cess') {
-	if (playing) {
-	    dispatcher.destroy();
-		playing = false;
-		connection.disconnect()
-	} else {
-		message.channel.send("Coglione non c'è niente in riproduzione");
-
+			}
+		}
 	}
-    }
-  
+	if (message.content === 'spazzatura') {
+
+		if (message.member.voice.channel) {
+			connection = await message.member.voice.channel.join();
+			shuffleArray(canzoni_shuffle)
+			canzone = canzoni_shuffle[head%canzoni_shuffle.length]
+			console.log(canzone);
+			riproduci(connection, canzone, true)
+
+		} else {
+			message.reply('Devi trovarti in un canale vocale');
+		}
+	}
+	if (message.content.toLowerCase() === 'annanz' || message.content.toLowerCase() === 'avanti' || message.content.toLowerCase() === 'skip') {
+		if (playing) {
+			head++
+			canzone = canzoni_shuffle[head]
+			dispatcher = connection.play(ytdl(canzone, { filter: 'audioonly' }))
+		}
+	}
+	if (message.content === 'fo cess') {
+		if (playing) {
+			dispatcher.destroy();
+			playing = false;
+			connection.disconnect()
+		} else {
+			message.channel.send("Coglione non c'è niente in riproduzione");
+
+		}
+	}
+
 });
