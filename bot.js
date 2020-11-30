@@ -19,7 +19,27 @@ const canzoni = [
 	"https://youtu.be/OpLIPTC0uC4",
 	"https://youtu.be/5a6o3R4T5ps",
 	"https://youtu.be/qesXIWOQAJg",
-	"https://youtu.be/15AIkcufw5s"
+	"https://youtu.be/15AIkcufw5s",
+	"https://youtu.be/gs-W19d5MQw",
+	"https://youtu.be/Wun-JhIAyt8",
+	"https://youtu.be/cjNNeSJJ2QA",
+	"https://youtu.be/k0Y3155sdR8",
+	"https://youtu.be/qnu0jb1XdXw",
+	"https://youtu.be/sa0YV6ceodQ",
+	"https://youtu.be/trvK3o1Yrx4",
+	"https://youtu.be/SE11KafTKJk",
+	"https://youtu.be/prX7zVOVecU",
+	"https://youtu.be/Z7cgDT1y_WA",
+	"https://youtu.be/xTx4gjP1lxg",
+	"https://youtu.be/ZCzQK4GFf-Y",
+	"https://youtu.be/nrA7Ni7hlJ4",
+	"https://youtu.be/xkpW6GfStfM",
+	"https://youtu.be/vLG1ey7Pipc",
+	"https://youtu.be/mJXWfOwjgZg",
+	"https://youtu.be/5NClv-oJDzM",
+	"https://youtu.be/mlTBM7LQCbI",
+	"https://youtu.be/LGsVgQbFfxI",
+	"https://www.youtube.com/watch?v=5HlXzO_eTy8"
 ]
 
 var playing = false;
