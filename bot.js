@@ -1,6 +1,6 @@
 require('dotenv').config()
 const Discord = require('discord.js');
-
+const fetch = require('node-fetch')
 const client = new Discord.Client();
 const ytdl = require('ytdl-core');
 client.login(process.env.BOT_TOKEN);
@@ -88,6 +88,9 @@ client.on('message', async message => {
 
 	if (!message.guild) return;
 	if (message.author.bot) return;
+	if (message.content.startsWith("!play")) {
+		message.channel.send("Il Bambino Rachitico è andato in pensione, usa -play <parola da cercare o link>. Per fermarlo puoi scrivere \"fo cess\", per riprodurre canzoni neomelodiche \"spazzatura\"")
+	}
 	if (message.content.startsWith(PREFIX) && message.content.length > 1) {
 		const args = message.content.slice(PREFIX.length).trim().split(/ +/);
 		const command = args.shift().toLowerCase();
@@ -95,10 +98,7 @@ client.on('message', async message => {
 		console.log(command)
 		if (!args.length && !(command === "play" || command === "p")) {
 			message.channel.send("Devi inserire un link di youtube in questo modo: -p <link> o -play <link>. Per fermare la musica del cuore puoi scrivere 'fo cess'. Non me la prendo.")
-		} else {
-			if (args.length > 2) {
-				message.channel.send("Devi inserire un solo link")
-			} else {
+		} else 
 				if (playing) {
 					dispatcher.destroy()
 					connection.disconnect()
@@ -110,13 +110,43 @@ client.on('message', async message => {
 						connection = await message.member.voice.channel.join();
 						riproduci(connection, "https://youtube.com/watch?v=" + match[2])
 					} else {
-						message.channel.send("Link non valido")
+						let query = args.join("+")
+						connection = await message.member.voice.channel.join();
+						fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${query}&key=${process.env.YOUTUBETOKEN}`, {method: "Get"}).then(res => res.json())
+						.then((json) => {
+							let url = "https://youtube.com/watch?v="+json.items[0].id.videoId
+							const embed = {
+								"title": `${json.items[0].snippet.title}`,
+								"description": `${json.items[0].snippet.channelTitle}`,
+								"url": `${url}`,
+								"color": 1274397,
+								"timestamp": "2021-01-29T10:01:37.739Z",
+								"footer": {
+								  "icon_url": "https://cdn.discordapp.com/embed/avatars/0.png",
+								  "text": "Ricerca YouTube"
+								},
+								"thumbnail": {
+								  "url": `${json.items[0].snippet.thumbnails.default.url}`
+								},
+								"author": {
+								  "name": "NeomelodiBOT Youtube",
+								  "url": "",
+								  "icon_url": ""
+								},
+								"fields": []
+							  };
+							  message.channel.send({ embed });
+							console.log(json.items[0].id.videoId)
+							riproduci(connection, "https://youtube.com/watch?v="+json.items[0].id.videoId)
+							//message.channel.send("Riproduco: " + json.items[0].snippet.title + " | Canale: " + json.items[0].snippet.channelTitle)
+						});
+						
 					}
 				}
 
 			}
-		}
-	}
+		
+	
 	if (message.content === 'spazzatura') {
 
 		if (message.member.voice.channel) {
