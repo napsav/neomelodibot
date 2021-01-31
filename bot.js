@@ -76,12 +76,56 @@ function riproduci(connection, canzone, neomelodico = false) {
 			console.log('Riproduzione interrotta');
 			if (neomelodico) {
 				head++
-				canzone = canzoni_shuffle[head%canzoni_shuffle.length]
+				canzone = canzoni_shuffle[head % canzoni_shuffle.length]
 				riproduci(connection, canzone, true)
 				playing = false;
 			}
+			
 		}
 	});
+}
+
+function urlyoutube(arg) {
+	const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*/;
+	let match = arg.match(regExp);
+	if (match && match[2].length == 11) {
+		return match[2]
+	} else {
+		return null;
+	}
+}
+
+async function queryYoutube(args) {
+	let query = args.join("+")
+	let final = [];
+	await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${query}&key=${process.env.YOUTUBETOKEN}`, { method: "Get" }).then(res => res.json())
+		.then((json) => {
+			let url = "https://youtube.com/watch?v=" + json.items[0].id.videoId
+			const embed = {
+				"title": `${json.items[0].snippet.title}`,
+				"description": `${json.items[0].snippet.channelTitle}`,
+				"url": `${url}`,
+				"color": 1274397,
+				"timestamp": "2021-01-29T10:01:37.739Z",
+				"footer": {
+					"icon_url": "https://cdn.discordapp.com/embed/avatars/0.png",
+					"text": "Ricerca YouTube"
+				},
+				"thumbnail": {
+					"url": `${json.items[0].snippet.thumbnails.default.url}`
+				},
+				"author": {
+					"name": "NeomelodiBOT Youtube",
+					"url": "",
+					"icon_url": ""
+				},
+				"fields": []
+			};
+			console.log(json.items[0].id.videoId)
+			final = [json.items[0].id.videoId, embed]
+			//message.channel.send("Riproduco: " + json.items[0].snippet.title + " | Canale: " + json.items[0].snippet.channelTitle)
+		});
+		return final;
 }
 
 client.on('message', async message => {
@@ -97,62 +141,43 @@ client.on('message', async message => {
 		console.log(args)
 		console.log(command)
 		if (!args.length && !(command === "play" || command === "p")) {
-			message.channel.send("Devi inserire un link di youtube in questo modo: -p <link> o -play <link>. Per fermare la musica del cuore puoi scrivere 'fo cess'. Non me la prendo.")
-		} else 
-				if (playing) {
-					dispatcher.destroy()
-					connection.disconnect()
-					playing = false;
-				} else {					
-					var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*/;
-					var match = args[0].match(regExp);
-					if (match && match[2].length == 11) {
-						connection = await message.member.voice.channel.join();
-						riproduci(connection, "https://youtube.com/watch?v=" + match[2])
-					} else {
-						let query = args.join("+")
-						connection = await message.member.voice.channel.join();
-						fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${query}&key=${process.env.YOUTUBETOKEN}`, {method: "Get"}).then(res => res.json())
-						.then((json) => {
-							let url = "https://youtube.com/watch?v="+json.items[0].id.videoId
-							const embed = {
-								"title": `${json.items[0].snippet.title}`,
-								"description": `${json.items[0].snippet.channelTitle}`,
-								"url": `${url}`,
-								"color": 1274397,
-								"timestamp": "2021-01-29T10:01:37.739Z",
-								"footer": {
-								  "icon_url": "https://cdn.discordapp.com/embed/avatars/0.png",
-								  "text": "Ricerca YouTube"
-								},
-								"thumbnail": {
-								  "url": `${json.items[0].snippet.thumbnails.default.url}`
-								},
-								"author": {
-								  "name": "NeomelodiBOT Youtube",
-								  "url": "",
-								  "icon_url": ""
-								},
-								"fields": []
-							  };
-							  message.channel.send({ embed });
-							console.log(json.items[0].id.videoId)
-							riproduci(connection, "https://youtube.com/watch?v="+json.items[0].id.videoId)
-							//message.channel.send("Riproduco: " + json.items[0].snippet.title + " | Canale: " + json.items[0].snippet.channelTitle)
-						});
-						
-					}
+			message.channel.send("Devi inserire un link di youtube in questo modo: -p <link o parola> o -play <link o parola>. Per fermare la musica del cuore puoi scrivere 'fo cess', per andare avanti 'annanz'. Non me la prendo.")
+		} else {
+			if (playing) {
+				let ytid = urlyoutube(args[0])
+				if (ytid != null) {
+					riproduci(connection, "https://youtube.com/watch?v=" + ytid)
+				} else {
+					let query = await queryYoutube(args)
+					console.log(query)
+					riproduci(connection, "https://youtube.com/watch?v=" + query[0])
+					message.channel.send( {embed: query[1]} )
 				}
 
+				//message.channel.send("Resetto la connessione. Puoi rimandare il messaggio?")
+			} else {
+				let ytid = urlyoutube(args[0])
+				if (ytid != null) {
+					connection = await message.member.voice.channel.join();
+					riproduci(connection, "https://youtube.com/watch?v=" + ytid)
+				} else {
+					connection = await message.member.voice.channel.join();
+					let query = await queryYoutube(args)
+					console.log(query)
+					riproduci(connection, "https://youtube.com/watch?v=" + query[0])
+					message.channel.send({embed: query[1]})
+				}
 			}
-		
-	
+		}
+	}
+
+
 	if (message.content === 'spazzatura') {
 
 		if (message.member.voice.channel) {
 			connection = await message.member.voice.channel.join();
 			shuffleArray(canzoni_shuffle)
-			canzone = canzoni_shuffle[head%canzoni_shuffle.length]
+			canzone = canzoni_shuffle[head % canzoni_shuffle.length]
 			console.log(canzone);
 			riproduci(connection, canzone, true)
 
