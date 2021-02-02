@@ -58,13 +58,14 @@ var canzoni_shuffle = canzoni
 const PREFIX = "-"
 var head = 0
 var canzone = null;
+let dispatcher = null;
 
 client.on('ready', () => {
 	console.log('Connesso');
 });
 
 function riproduci(connection, canzone, neomelodico = false) {
-	const dispatcher = connection.play(ytdl(canzone, {
+	dispatcher = connection.play(ytdl(canzone, {
 		quality: 'highestaudio',
 		highWaterMark: 1 << 25
 	}));
