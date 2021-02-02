@@ -45,7 +45,6 @@ const canzoni = [
 ]
 
 var playing = false;
-var dispatcher;
 var connection;
 
 function shuffleArray(array) {
@@ -65,7 +64,7 @@ client.on('ready', () => {
 });
 
 function riproduci(connection, canzone, neomelodico = false) {
-	dispatcher = connection.play(ytdl(canzone, {
+	const dispatcher = connection.play(ytdl(canzone, {
 		quality: 'highestaudio',
 		highWaterMark: 1 << 25
 	}));
@@ -78,9 +77,12 @@ function riproduci(connection, canzone, neomelodico = false) {
 				head++
 				canzone = canzoni_shuffle[head % canzoni_shuffle.length]
 				riproduci(connection, canzone, true)
+				connection.disconnect()
 				playing = false;
+			} else {
+				playing=false;
+				connection.disconnect()
 			}
-			
 		}
 	});
 }
@@ -121,11 +123,11 @@ async function queryYoutube(args) {
 				},
 				"fields": []
 			};
-			console.log(json.items[0].id.videoId)
+			//console.log(json.items[0].id.videoId)
 			final = [json.items[0].id.videoId, embed]
 			//message.channel.send("Riproduco: " + json.items[0].snippet.title + " | Canale: " + json.items[0].snippet.channelTitle)
 		});
-		return final;
+	return final;
 }
 
 client.on('message', async message => {
@@ -143,30 +145,24 @@ client.on('message', async message => {
 		if (!args.length && !(command === "play" || command === "p")) {
 			message.channel.send("Devi inserire un link di youtube in questo modo: -p <link o parola> o -play <link o parola>. Per fermare la musica del cuore puoi scrivere 'fo cess', per andare avanti 'annanz'. Non me la prendo.")
 		} else {
-			if (playing) {
-				let ytid = urlyoutube(args[0])
-				if (ytid != null) {
-					riproduci(connection, "https://youtube.com/watch?v=" + ytid)
-				} else {
-					let query = await queryYoutube(args)
-					console.log(query)
-					riproduci(connection, "https://youtube.com/watch?v=" + query[0])
-					message.channel.send( {embed: query[1]} )
+			//message.channel.send("Resetto la connessione. Puoi rimandare il messaggio?")
+			let ytid = urlyoutube(args[0])
+			if (ytid != null) {
+				if (!message.guild.me.voice.connection) {
+					connection = await message.member.voice.channel.join();
 				}
-
-				//message.channel.send("Resetto la connessione. Puoi rimandare il messaggio?")
+				console.log(connection)
+				console.log(message.guild.me.voice.connection)
+				riproduci(connection, "https://youtube.com/watch?v=" + ytid)
 			} else {
-				let ytid = urlyoutube(args[0])
-				if (ytid != null) {
+				if (!message.guild.me.voice.connection) {
 					connection = await message.member.voice.channel.join();
-					riproduci(connection, "https://youtube.com/watch?v=" + ytid)
-				} else {
-					connection = await message.member.voice.channel.join();
-					let query = await queryYoutube(args)
-					console.log(query)
-					riproduci(connection, "https://youtube.com/watch?v=" + query[0])
-					message.channel.send({embed: query[1]})
 				}
+				console.log(message.guild.me.voice.connection)
+				let query = await queryYoutube(args)
+				
+				riproduci(connection, "https://youtube.com/watch?v=" + query[0])
+				message.channel.send({ embed: query[1] })
 			}
 		}
 	}
